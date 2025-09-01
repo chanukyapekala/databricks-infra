@@ -9,16 +9,6 @@
         "main": "READ",
         "samples": "USE"
       }
-    },
-    {
-      "user_name": "baswapriyanka@gmail.com",
-      "display_name": "Priyanka Baswa",
-      "groups": ["developers"],
-      "workspace_access": "CAN_ATTACH_TO",
-      "catalog_permissions": {
-        "main": "USE",
-        "samples": "READ"
-      }
     }
   ]
 }

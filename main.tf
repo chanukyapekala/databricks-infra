@@ -1,39 +1,15 @@
+# main.tf
+
 # Data source for current user
 data "databricks_current_user" "me" {}
 
 locals {
-  users_config = jsondecode(file("${path.module}/users.json"))
-
   # Create map of group names to display names
   group_names = {
     for group_name, display_name in var.allowed_groups :
     group_name => display_name
     if contains(distinct(flatten([for user in local.users_config.users : user.groups])), group_name)
   }
-
-  # Filter out reserved catalog names
-  catalog_names = toset([
-    for catalog in distinct(flatten([
-      for user in local.users_config.users : keys(user.catalog_permissions)
-    ])) : catalog
-    if !contains(["samples", "main", "hive_metastore"], catalog)
-  ])
-}
-
-# Data source for existing catalogs
-data "databricks_catalog" "existing_catalogs" {
-  for_each = toset(["main", "samples"])
-  name     = each.key
-}
-
-# Create custom catalogs
-resource "databricks_catalog" "custom_catalogs" {
-  for_each   = local.catalog_names
-  name       = each.key
-  comment    = "Catalog managed by Terraform"
-  properties = {}
-
-  depends_on = [data.databricks_catalog.existing_catalogs]
 }
 
 # Create notebook directory
@@ -54,12 +30,12 @@ resource "databricks_group" "groups" {
   display_name = each.value
 }
 
-# Try to get existing users first
+# Create or update users
 resource "databricks_user" "users" {
   for_each     = { for user in local.users_config.users : user.user_name => user }
   user_name    = each.value.user_name
   display_name = each.value.display_name
-  force        = true  # This allows updating existing users
+  force        = true
 
   lifecycle {
     ignore_changes = [external_id]
@@ -83,27 +59,4 @@ resource "databricks_group_member" "user_groups" {
   member_id = databricks_user.users[each.value.user_name].id
 
   depends_on = [databricks_group.groups, databricks_user.users]
-}
-
-# Set catalog permissions using grants
-resource "databricks_grants" "catalog_grants" {
-  for_each = {
-    for pair in flatten([
-      for user in local.users_config.users : [
-        for catalog, permission in user.catalog_permissions : {
-          user_name  = user.user_name
-          catalog    = catalog
-          permission = permission
-        }
-        if contains(keys(data.databricks_catalog.existing_catalogs), catalog) || contains(keys(databricks_catalog.custom_catalogs), catalog)
-      ]
-    ]) : "${pair.user_name}-${pair.catalog}" => pair
-  }
-  catalog = each.value.catalog
-  grant {
-    principal  = databricks_user.users[each.value.user_name].id
-    privileges = [each.value.permission]
-  }
-
-  depends_on = [databricks_catalog.custom_catalogs, databricks_user.users]
 }
