@@ -17,6 +17,7 @@ resource "databricks_schema" "custom_schemas" {
   name         = each.value.schema_name
   comment      = "Schema managed by Terraform"
   properties   = {}
+  force_destroy = true
   depends_on = [databricks_catalog.custom_catalogs]
 }
 

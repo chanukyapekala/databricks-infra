@@ -21,3 +21,13 @@ variable "allowed_groups" {
     "developers"      = "Developers"
   }
 }
+
+variable "users" {
+  description = "List of users to create in Databricks workspace"
+  type = list(object({
+    user_name    = string
+    display_name = string
+    groups       = list(string)
+  }))
+  default = []
+}
