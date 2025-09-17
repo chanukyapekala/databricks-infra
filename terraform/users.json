@@ -3,7 +3,17 @@
     {
       "user_name": "chanukya.pekala@gmail.com",
       "display_name": "Chanukya Pekala",
-      "groups": ["Admins", "Developers"],
+      "groups": ["admins", "pilot"],
+      "workspace_access": "CAN_ATTACH_TO",
+      "catalog_permissions": {
+        "main": "READ",
+        "samples": "USE"
+      }
+    },
+    {
+      "user_name": "komal.azram@gmail.com",
+      "display_name": "Komal Azram",
+      "groups": ["admins", "pilot"],
       "workspace_access": "CAN_ATTACH_TO",
       "catalog_permissions": {
         "main": "READ",
@@ -13,7 +23,7 @@
     {
       "user_name": "yangtuomailbox@gmail.com",
       "display_name": "Yang Tuo",
-      "groups": ["Developers"],
+      "groups": ["pilot"],
       "workspace_access": "CAN_ATTACH_TO",
       "catalog_permissions": {
             "main": "READ",
@@ -23,7 +33,7 @@
     {
       "user_name": "Joonas.f.koskinen@gmail.com",
       "display_name": "Joonas Koskinen",
-      "groups": ["Developers"],
+      "groups": ["pilot"],
       "workspace_access": "CAN_ATTACH_TO",
       "catalog_permissions": {
         "main": "READ",
@@ -33,7 +43,7 @@
     {
       "user_name": "rafaela.kschroeder@gmail.com",
       "display_name": "Rafaela Kschroeder",
-      "groups": ["Developers"],
+      "groups": ["pilot"],
       "workspace_access": "CAN_ATTACH_TO",
       "catalog_permissions": {
         "main": "READ",
@@ -43,11 +53,21 @@
     {
       "user_name": "amydn16@gmail.com",
       "display_name": "Amy Ngo",
-      "groups": ["Developers"],
+      "groups": ["pilot"],
       "workspace_access": "CAN_ATTACH_TO",
       "catalog_permissions": {
         "main": "READ",
         "samples": "USE"
+      }
+    },
+    {
+      "user_name": "oiivantsov@outlook.com",
+      "display_name": "Oleg Tsov",
+      "groups": ["pilot"],
+      "workspace_access": "CAN_ATTACH_TO",
+      "catalog_permissions": {
+            "main": "READ",
+            "samples": "USE"
       }
     }
   ]
