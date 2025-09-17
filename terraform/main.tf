@@ -26,17 +26,34 @@ resource "databricks_directory" "notebooks_dir" {
   delete_recursive = true
 }
 
-# Create datasets directory
-resource "databricks_directory" "datasets_dir" {
-  path       = "${databricks_directory.course_root.path}/datasets"
-  depends_on = [databricks_directory.course_root]
+# Create notebook subdirectories (manually listed)
+resource "databricks_directory" "notebook_subdirs" {
+  for_each = toset(var.notebook_subdirs)
+  path     = "${databricks_directory.notebooks_dir.path}/${each.key}"
+  delete_recursive = true
+  depends_on = [databricks_directory.notebooks_dir]
 }
 
-# Upload notebooks
+# Upload notebooks (manually listed)
 resource "databricks_notebook" "notebooks" {
-  for_each        = local.notebooks
-  path            = "${databricks_directory.notebooks_dir.path}/${dirname(each.key)}/${each.value}"
-  language        = var.notebook_language
-  content_base64  = fileexists("${path.module}/course/notebooks/${each.key}") ? base64encode(file("${path.module}/course/notebooks/${each.key}")) : base64encode("")
-  depends_on      = [databricks_directory.notebooks_dir]
+  for_each = var.notebooks
+
+  path     = "${databricks_directory.notebooks_dir.path}/${each.key}"
+  source   = "${path.module}/../course/notebooks/${each.key}"
+  language = each.value
+  depends_on = [databricks_directory.notebook_subdirs]
+}
+
+# Create datasets directory
+resource "databricks_directory" "datasets_dir" {
+  path             = "${databricks_directory.course_root.path}/datasets"
+  depends_on       = [databricks_directory.course_root]
+  delete_recursive = true
+}
+
+# Upload datasets
+resource "databricks_workspace_file" "test_csv" {
+  source = "${path.module}/../course/datasets/test.csv"
+  path   = "${databricks_directory.datasets_dir.path}/test.csv"
+  depends_on = [databricks_directory.datasets_dir]
 }
