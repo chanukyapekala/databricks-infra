@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@github/mcp-server-github"]
+    }
+  }
+}
