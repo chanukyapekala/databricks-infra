@@ -69,6 +69,16 @@
             "main": "READ",
             "samples": "USE"
       }
+    },
+    {
+      "user_name": "tishchuk167@gmail.com",
+      "display_name": "Grigori",
+      "groups": ["pilot"],
+      "workspace_access": "CAN_ATTACH_TO",
+        "catalog_permissions": {
+                "main": "READ",
+                "samples": "USE"
+        }
     }
   ]
 }
