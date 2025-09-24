@@ -9,6 +9,7 @@ Please make sure to share your email with Chanu on Discord (@Chanukya) so you ca
 Once you've joined the Databricks workspace, you can set up the Databricks CLI with these steps:
 
 1. Install Homebrew (offical documentation [here](https://brew.sh/)).
+
 2. Run
 
     ```bash
@@ -17,8 +18,11 @@ Once you've joined the Databricks workspace, you can set up the Databricks CLI w
     ```
 
 to install the Databricks CLI at v0.269.0 or newer.
+
 3. Run `databricks auth login`.
+
 4. When prompted for your Databricks profile name, enter the email address you used to join the Databricks workspace.
+
 5. When prompted for your Databricks host:
     1. Go to the Databricks workspace.
     2. Click on `Compute` in the left sidebar.
