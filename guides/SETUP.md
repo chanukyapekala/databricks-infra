@@ -16,7 +16,7 @@ Once you've joined the Databricks workspace, you can set up the Databricks CLI w
     brew install databricks
     ```
 
-to install the Databricks CLI at version >=0.269.0 .
+to install the Databricks CLI at v0.269.0 or newer.
 3. Run `databricks auth login`.
 4. When prompted for your Databricks profile name, enter the email address you used to join the Databricks workspace.
 5. When prompted for your Databricks host:
