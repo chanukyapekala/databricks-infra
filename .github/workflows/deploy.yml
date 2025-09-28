@@ -30,7 +30,7 @@ jobs:
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/bugfix/')
         run: terraform apply -auto-approve tfplan
         working-directory: terraform
         env:
