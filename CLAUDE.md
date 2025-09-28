@@ -21,7 +21,6 @@ This is a Terraform-based Infrastructure as Code (IaC) repository for managing D
 ### Course Structure
 - **Notebooks**: Organized in `course/notebooks/` with 5 weekly modules (16 notebooks total)
 - **Datasets**: Sample data files in `course/datasets/` for hands-on exercises
-- **Student Setup**: Configuration files in `course/student_setup/`
 
 ### Configuration Data
 - **User Management**: `terraform/users.json` contains user definitions with group assignments and permissions
