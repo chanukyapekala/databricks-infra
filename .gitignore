@@ -5,3 +5,7 @@ terraform.tfstate.backup
 *.tfvars
 .idea
 *.backup
+
+# VS Code and MCP configuration (may contain local paths)
+.vscode/settings.json
+.vscode/mcp.json
