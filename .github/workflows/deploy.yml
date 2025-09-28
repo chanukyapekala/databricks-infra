@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - feature/add-pilot-users
+      - bugfix/*
   workflow_dispatch:
 
 jobs:
@@ -23,14 +23,14 @@ jobs:
         working-directory: terraform
 
       - name: Terraform Plan
-        run: terraform plan -out=tfplan
+        run: terraform plan -out=tfplan -var="create_catalogs=false" -var="create_groups=false" -var="create_schemas=false"
         working-directory: terraform
         env:
           DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/bugfix/')
         run: terraform apply -auto-approve tfplan
         working-directory: terraform
         env:

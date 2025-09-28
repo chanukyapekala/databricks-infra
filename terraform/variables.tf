@@ -4,6 +4,24 @@ variable "notebook_language" {
   default     = "PYTHON"
 }
 
+variable "create_catalogs" {
+  description = "Whether to create catalogs (set to false for Free Edition or CI/CD)"
+  type        = bool
+  default     = true
+}
+
+variable "create_groups" {
+  description = "Whether to create groups (set to false if groups already exist)"
+  type        = bool
+  default     = true
+}
+
+variable "create_schemas" {
+  description = "Whether to create schemas (set to false if schemas already exist)"
+  type        = bool
+  default     = true
+}
+
 variable "notebook_subdirs" {
   type    = list(string)
   default = ["01_week", "02_week", "03_week", "04_week", "05_week"]
