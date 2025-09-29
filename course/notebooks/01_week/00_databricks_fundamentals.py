@@ -86,8 +86,6 @@ print("=== Databricks Environment Information ===")
 
 # Get Spark context information
 print(f"Spark Version: {spark.version}")
-print(f"Spark App Name: {spark.sparkContext.appName}")
-print(f"Spark App ID: {spark.sparkContext.applicationId}")
 
 # Get cluster information
 import os
@@ -239,24 +237,19 @@ df.printSchema()
 # Demonstrate basic performance optimization concepts
 print("=== Performance Optimization Examples ===")
 
-# 1. Caching frequently accessed data
-print("1. Data Caching:")
-df_cached = df.cache()
-print("   - DataFrame cached in memory for faster subsequent access")
-
-# 2. Partitioning data for better query performance
-print("\n2. Data Partitioning:")
+# 1. Partitioning data for better query performance
+print("\n1. Data Partitioning:")
 print("   - Partition by frequently queried columns (e.g., date, region)")
 print("   - Example: df.write.partitionBy('date').save('/path/to/data')")
 
-# 3. Using appropriate file formats
-print("\n3. File Format Optimization:")
+# 2. Using appropriate file formats
+print("\n2. File Format Optimization:")
 print("   - Parquet: Column-oriented, compressed, schema evolution")
 print("   - Delta: Parquet + ACID transactions + time travel")
 print("   - Avoid CSV for large datasets in production")
 
-# 4. Cluster sizing
-print("\n4. Cluster Optimization:")
+# 3. Cluster sizing
+print("\n3. Cluster Optimization:")
 print("   - Right-size clusters based on workload")
 print("   - Use auto-scaling for variable workloads")
 print("   - Consider spot instances for cost optimization")
@@ -307,5 +300,4 @@ print("   - Consider spot instances for cost optimization")
 # COMMAND ----------
 
 # Clean up resources
-df.unpersist()
 print("Resources cleaned up. Ready for the next notebook!")

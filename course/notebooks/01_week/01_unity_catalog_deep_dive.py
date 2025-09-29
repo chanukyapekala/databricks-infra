@@ -467,9 +467,6 @@ print("=== Audit and Monitoring Demonstration ===")
 
 # Show query execution information
 print("Query execution metadata:")
-print(f"- Spark Application ID: {spark.sparkContext.applicationId}")
-print(f"- Spark Application Name: {spark.sparkContext.appName}")
-print(f"- Driver Host: {spark.sparkContext.sparkUser()}")
 
 # Demonstrate query performance monitoring
 from pyspark.sql.functions import count, sum as spark_sum, avg, max as spark_max

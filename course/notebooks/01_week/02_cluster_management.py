@@ -80,15 +80,7 @@ cluster_id = os.getenv('DATABRICKS_CLUSTER_ID', 'Not available')
 print(f"Cluster ID: {cluster_id}")
 
 # Spark configuration
-spark_conf = spark.sparkContext.getConf().getAll()
 print(f"\nSpark Version: {spark.version}")
-print(f"Application Name: {spark.sparkContext.appName}")
-print(f"Master: {spark.sparkContext.master}")
-
-# Driver and executor information
-print(f"\nDriver Memory: {spark.sparkContext.getConf().get('spark.driver.memory', 'Not specified')}")
-print(f"Executor Memory: {spark.sparkContext.getConf().get('spark.executor.memory', 'Not specified')}")
-print(f"Executor Cores: {spark.sparkContext.getConf().get('spark.executor.cores', 'Not specified')}")
 
 # COMMAND ----------
 
@@ -128,13 +120,6 @@ print(f"Executor Cores: {spark.sparkContext.getConf().get('spark.executor.cores'
 # Analyze current cluster resource utilization
 print("=== Resource Utilization Analysis ===")
 
-# Get Spark context information
-sc = spark.sparkContext
-
-# Default parallelism (number of partitions for RDDs)
-default_parallelism = sc.defaultParallelism
-print(f"Default Parallelism: {default_parallelism}")
-
 # Examine current configuration
 important_configs = [
     'spark.sql.adaptive.enabled',
@@ -146,7 +131,10 @@ important_configs = [
 
 print("\nImportant Spark Configurations:")
 for config in important_configs:
-    value = spark.conf.get(config, "Not set")
+    try:
+        value = spark.conf.get(config)
+    except Exception:
+        value = "Not available"
     print(f"  {config}: {value}")
 
 # COMMAND ----------
@@ -185,7 +173,7 @@ df = spark.createDataFrame(sample_data)
 print(f"Created dataset with {df.count()} records")
 
 # Check default partitioning
-print(f"Default number of partitions: {df.rdd.getNumPartitions()}")
+print(f"Default number of partitions: {spark.conf.get('spark.sql.shuffle.partitions')}")
 
 # COMMAND ----------
 
@@ -206,7 +194,7 @@ result2 = df_repartitioned.groupBy("product_category").agg(F.sum("order_amount")
 repartition_time = time.time() - start_time
 
 print(f"2. Repartitioned by key time: {repartition_time:.3f} seconds")
-print(f"   Partitions after repartition: {df_repartitioned.rdd.getNumPartitions()}")
+print(f"   Partitions after repartition: {spark.conf.get('spark.sql.shuffle.partitions')}")
 
 # 3. Coalesce to reduce partitions
 start_time = time.time()
@@ -215,7 +203,7 @@ result3 = df_coalesced.groupBy("product_category").agg(F.sum("order_amount").ali
 coalesce_time = time.time() - start_time
 
 print(f"3. Coalesced partitions time: {coalesce_time:.3f} seconds")
-print(f"   Partitions after coalesce: {df_coalesced.rdd.getNumPartitions()}")
+print(f"   Partitions after coalesce: {spark.conf.get('spark.sql.shuffle.partitions')}")
 
 # Display results
 print("\nAggregation Results:")
@@ -345,11 +333,6 @@ complex_df = df.select("*") \
     .withColumn("year", F.year("order_date")) \
     .withColumn("quarter", F.quarter("order_date"))
 
-# Cache for multiple operations
-complex_df.cache()
-
-print("Cached DataFrame for performance analysis")
-
 # Monitor multiple operations
 operations = [
     ("Aggregation by month", lambda df: df.groupBy("year", "month").agg(F.sum("order_amount")).collect()),
@@ -371,10 +354,6 @@ for op_name, operation in operations:
         print(f"{op_name}: {execution_time:.3f} seconds ({len(result)} results)")
     except Exception as e:
         print(f"{op_name}: Error - {e}")
-
-# Unpersist cached data
-complex_df.unpersist()
-print("\nUnpersisted cached data")
 
 # COMMAND ----------
 
@@ -547,9 +526,13 @@ print(f"{compliance_status} Worker count: {current_workers}/{policy_rules['max_w
 # Check Spark configurations
 print(f"\nSpark Configuration Compliance:")
 for required_config in policy_rules["required_spark_configs"]:
-    value = spark.conf.get(required_config, None)
-    status = "✓" if value is not None else "✗"
-    print(f"{status} {required_config}: {value}")
+    try:
+        value = spark.conf.get(required_config, None)
+        status = "✓" if value is not None else "✗"
+        print(f"{status} {required_config}: {value}")
+    except Exception:
+        value = "Not available"
+        print(f"{required_config}: {value}")
 
 # Policy recommendations
 print(f"\n📋 Policy Recommendations:")
@@ -589,11 +572,14 @@ print("=== Cluster Troubleshooting Toolkit ===")
 # 1. Memory analysis
 def analyze_memory_usage():
     """Analyze current memory usage patterns"""
-    total_memory = spark.sparkContext.getConf().get('spark.executor.memory', 'Unknown')
-    storage_fraction = spark.sparkContext.getConf().get('spark.sql.execution.arrow.maxRecordsPerBatch', '0.6')
-    
-    print(f"Executor Memory: {total_memory}")
-    print(f"Storage Memory Fraction: {storage_fraction}")
+    try:
+        total_memory = spark.conf.get('spark.executor.memory')
+        storage_fraction = spark.sparkContext.getConf().get('spark.sql.execution.arrow.maxRecordsPerBatch', '0.6')
+
+        print(f"Executor memory: {total_memory}")
+        print(f"Storage Memory Fraction: {storage_fraction}")
+    except Exception as e:
+        print(f"Executor memory: Not accessible on serverless compute")
     
     # Check for cached datasets
     cached_tables = spark.sql("SHOW TABLES").filter("isTemporary = true").collect()
@@ -602,11 +588,18 @@ def analyze_memory_usage():
 # 2. Performance diagnostics
 def diagnose_performance(df):
     """Basic performance diagnostics for a DataFrame"""
-    print(f"DataFrame partitions: {df.rdd.getNumPartitions()}")
+    print(f"DataFrame partitions: {spark.conf.get('spark.sql.shuffle.partitions')}")
     print(f"Estimated DataFrame size: {df.count()} rows")
     
     # Check for skewed partitions
-    partition_sizes = df.rdd.mapPartitionsWithIndex(lambda i, iterator: [(i, sum(1 for _ in iterator))]).collect()
+    from pyspark.sql.functions import spark_partition_id, count
+    partition_sizes = (df
+        .groupBy(spark_partition_id().alias("partition_id"))
+        .agg(count("*").alias("row_count"))
+        .orderBy("partition_id")
+        .collect()
+    )
+    partition_sizes = [(row.partition_id, row.row_count) for row in partition_sizes]
     sizes = [size for _, size in partition_sizes]
     
     if sizes:
@@ -622,33 +615,12 @@ def diagnose_performance(df):
         if skew_ratio > 2.0:
             print("⚠️  High partition skew detected - consider repartitioning")
 
-# 3. Resource utilization check
-def check_resource_utilization():
-    """Check basic resource utilization indicators"""
-    
-    # Get application metrics
-    app_id = spark.sparkContext.applicationId
-    print(f"Application ID: {app_id}")
-    
-    # Check default parallelism vs available cores
-    parallelism = spark.sparkContext.defaultParallelism
-    print(f"Default parallelism: {parallelism}")
-    
-    # Recommend optimal settings
-    print(f"\n🔧 Optimization Recommendations:")
-    print(f"- For small datasets: Use coalesce({min(parallelism//2, 4)}) to reduce overhead")
-    print(f"- For large datasets: Consider repartition({parallelism*2}) for better parallelism")
-    print(f"- Monitor Spark UI for detailed performance metrics")
-
 # Run diagnostics
 print("Running memory analysis...")
 analyze_memory_usage()
 
 print("\nRunning performance diagnostics on sample data...")
 diagnose_performance(df)
-
-print("\nChecking resource utilization...")
-check_resource_utilization()
 
 # COMMAND ----------
 
@@ -692,7 +664,7 @@ check_resource_utilization()
 # COMMAND ----------
 
 # Clean up resources
-df.unpersist() if 'df' in locals() else None
+df = None if 'df' in locals() else None
 
 print("=== Cluster Management Deep Dive Complete ===")
 print("\nKey Takeaways:")

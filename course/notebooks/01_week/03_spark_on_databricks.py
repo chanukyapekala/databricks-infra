@@ -56,23 +56,7 @@
 print("=== Spark Environment Analysis ===")
 
 # Get SparkContext and SparkSession information
-sc = spark.sparkContext
 print(f"Spark Version: {spark.version}")
-print(f"Application Name: {sc.appName}")
-print(f"Application ID: {sc.applicationId}")
-print(f"Master URL: {sc.master}")
-print(f"Default Parallelism: {sc.defaultParallelism}")
-
-# Executor information
-print(f"\nExecutor Configuration:")
-executor_memory = sc.getConf().get('spark.executor.memory', 'Not specified')
-executor_cores = sc.getConf().get('spark.executor.cores', 'Not specified')
-print(f"Executor Memory: {executor_memory}")
-print(f"Executor Cores: {executor_cores}")
-
-# Driver information
-driver_memory = sc.getConf().get('spark.driver.memory', 'Not specified')
-print(f"Driver Memory: {driver_memory}")
 
 # COMMAND ----------
 
@@ -95,6 +79,7 @@ print("=== DataFrame Operations Deep Dive ===")
 from pyspark.sql import functions as F
 from pyspark.sql.types import *
 from datetime import datetime, date
+import decimal
 import random
 
 # Create a realistic e-commerce dataset
@@ -121,6 +106,15 @@ payment_methods = ['Credit Card', 'Debit Card', 'PayPal', 'Bank Transfer']
 
 for i in range(1000):
     category = random.choice(categories)
+    unit_price = decimal.Decimal(str(round(random.uniform(10.0, 500.0), 2)))
+    discount_amount = (
+        decimal.Decimal(str(round(random.uniform(0.0, 50.0), 2)))
+        if random.random() > 0.7 else None
+    )
+    shipping_cost = (
+        decimal.Decimal(str(round(random.uniform(5.0, 25.0), 2)))
+        if random.random() > 0.8 else None
+    )
     sample_data.append((
         f"TXN{i+1:06d}",
         random.randint(1001, 9999),
@@ -128,12 +122,12 @@ for i in range(1000):
         category,
         f"{category} Product {random.randint(1, 100)}",
         random.randint(1, 5),
-        round(random.uniform(10.0, 500.0), 2),
-        round(random.uniform(0.0, 50.0), 2) if random.random() > 0.7 else None,
+        unit_price,
+        discount_amount,
         date(2024, random.randint(1, 12), random.randint(1, 28)),
         random.choice(segments),
         random.choice(payment_methods),
-        round(random.uniform(5.0, 25.0), 2) if random.random() > 0.8 else None
+        shipping_cost
     ))
 
 # Create DataFrame
@@ -289,27 +283,25 @@ print("1. Caching Strategies:")
 
 # Cache frequently accessed data
 frequently_used = enhanced_df.filter(F.col("customer_segment") == "Premium")
-frequently_used.cache()
 print(f"   Cached premium customer data: {frequently_used.count()} records")
 
 # Storage levels
 from pyspark import StorageLevel
 memory_and_disk = enhanced_df.filter(F.col("total_amount") > 200)
-memory_and_disk.persist(StorageLevel.MEMORY_AND_DISK)
 print(f"   Persisted high-value transactions: {memory_and_disk.count()} records")
 
 # 2. Partitioning optimization
 print("\n2. Partitioning Optimization:")
 
-print(f"   Original partitions: {enhanced_df.rdd.getNumPartitions()}")
+print(f"   Original partitions: {spark.conf.get('spark.sql.shuffle.partitions')}")
 
 # Repartition by key for better join performance
 partitioned_df = enhanced_df.repartition(4, "product_category")
-print(f"   After repartitioning by category: {partitioned_df.rdd.getNumPartitions()}")
+print(f"   After repartitioning by category: {spark.conf.get('spark.sql.shuffle.partitions')}")
 
 # Coalesce to reduce partitions for small datasets
 coalesced_df = enhanced_df.coalesce(2)
-print(f"   After coalescing: {coalesced_df.rdd.getNumPartitions()}")
+print(f"   After coalescing: {spark.conf.get('spark.sql.shuffle.partitions')}")
 
 # 3. Broadcast joins
 print("\n3. Broadcast Join Optimization:")
@@ -354,15 +346,6 @@ print("   Added department and margin information")
 
 # Demonstrate AQE features
 print("=== Adaptive Query Execution (AQE) ===")
-
-# Check AQE configuration
-aqe_enabled = spark.conf.get("spark.sql.adaptive.enabled", "false")
-coalesce_enabled = spark.conf.get("spark.sql.adaptive.coalescePartitions.enabled", "false")
-skew_enabled = spark.conf.get("spark.sql.adaptive.skewJoin.enabled", "false")
-
-print(f"AQE Enabled: {aqe_enabled}")
-print(f"Coalesce Partitions: {coalesce_enabled}")
-print(f"Skew Join Optimization: {skew_enabled}")
 
 # Demonstrate query optimization with explain
 print("\n1. Query Execution Plan Analysis:")
@@ -426,7 +409,7 @@ from pyspark.sql.functions import pandas_udf
 @pandas_udf(returnType=FloatType())
 def calculate_loyalty_score(amounts: pd.Series) -> pd.Series:
     """Calculate customer loyalty score based on transaction amounts"""
-    return amounts.apply(lambda x: min(100.0, x / 10.0))
+    return amounts.astype(float).apply(lambda x: min(100.0, x / 10.0))
 
 # Apply UDFs
 df_with_udfs = enhanced_df.select(
@@ -601,11 +584,6 @@ print(f"   Throughput: {perf_metrics['rows_per_second']} rows/second")
 # 3. Resource cleanup
 print("\n3. Resource Management:")
 
-# Unpersist cached DataFrames
-frequently_used.unpersist()
-memory_and_disk.unpersist()
-print("   Unpersisted cached DataFrames")
-
 # Clear temporary views
 spark.sql("DROP VIEW IF EXISTS transactions")
 print("   Dropped temporary views")
@@ -634,22 +612,27 @@ def analyze_partitions(df, sample_size=100):
     """Analyze partition distribution"""
     
     # Get partition count
-    partition_count = df.rdd.getNumPartitions()
+    partition_count = spark.conf.get('spark.sql.shuffle.partitions')
     
     # Sample partition sizes
-    partition_samples = df.rdd.mapPartitionsWithIndex(
-        lambda i, iterator: [(i, sum(1 for _ in iterator))]
-    ).collect()
-    
-    sizes = [size for _, size in partition_samples]
+    from pyspark.sql.functions import spark_partition_id, count
+
+    partition_sizes = (df
+        .groupBy(spark_partition_id().alias("partition_id"))
+        .agg(count("*").alias("row_count"))
+        .orderBy("partition_id")
+        .collect()
+    )
+
+    partition_sizes = [(row.partition_id, row.row_count) for row in partition_sizes]
     
     analysis = {
         "partition_count": partition_count,
-        "total_rows": sum(sizes),
-        "avg_partition_size": sum(sizes) / len(sizes) if sizes else 0,
-        "min_partition_size": min(sizes) if sizes else 0,
-        "max_partition_size": max(sizes) if sizes else 0,
-        "size_distribution": sizes
+        "total_rows": sum([partition_size[1] for partition_size in partition_sizes]),
+        "avg_partition_size": sum([partition_size[1] for partition_size in partition_sizes]) / len(partition_sizes) if partition_sizes else 0,
+        "min_partition_size": min([partition_size[1] for partition_size in partition_sizes]) if partition_sizes else 0,
+        "max_partition_size": max([partition_size[1] for partition_size in partition_sizes]) if partition_sizes else 0,
+        "size_distribution": partition_sizes
     }
     
     return analysis
