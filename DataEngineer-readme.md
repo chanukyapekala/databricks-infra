@@ -1,19 +1,34 @@
-# Data Engineer Guide - Databricks Course
+# Data Engineer Guide - Zero-Setup Learning
 
 *"I want to learn Databricks through hands-on notebooks and work with data"*
 
-## 🚀 Quick Start
+## 🚀 Get Started in 3 Steps
 
-### Prerequisites
-1. **Sign up for Databricks Free Trial**: [databricks.com/try-databricks](https://databricks.com/try-databricks)
-2. **Complete workspace setup** (no credit card required)
+### Step 1: Access Databricks Workspace
+**Option A: Use Provided Workspace**
+- Get workspace URL from instructor
+- Login with provided credentials
+- **Zero setup required**
 
-### Get Started in 3 Steps
+**Option B: Your Own Free Trial**
+- Sign up at [databricks.com/try-databricks](https://databricks.com/try-databricks)
+- Complete workspace setup (2 minutes)
+- No credit card required
+
+### Step 2: Find the Course Content
 ```bash
-# 1. Access your Databricks workspace via browser
-# 2. Navigate to: Workspace → Shared → Import
-# 3. Import notebooks from this repository's course/notebooks/ directory
-# 4. Start with: 01_week/00_databricks_fundamentals.py
+# In your Databricks workspace:
+# 1. Navigate to: Workspace → Shared → terraform-managed → course → notebooks
+# 2. All course content is already there!
+# 3. Start with: 01_week/00_databricks_fundamentals.py
+```
+
+### Step 3: Start Learning
+```bash
+# Copy notebooks to your personal space to edit:
+# 1. Right-click any notebook → Clone
+# 2. Save to: /Users/{your-email}/my-learning/
+# 3. Edit, experiment, and learn!
 ```
 
 ## 📚 Course Structure (5 Weeks, 16 Notebooks)
@@ -38,27 +53,6 @@
 
 ### 🔴 Production Ready (1 week)
 - Week 5: Job orchestration and workflow automation
-
-## 📝 Working with Notebooks
-
-### Option 1: Direct Workspace (Simplest)
-1. **Upload notebooks**: Import all from `course/notebooks/` to your workspace
-2. **Upload datasets**: Import sample data from `course/datasets/`
-3. **Create catalogs**: Follow notebook instructions for manual catalog creation
-4. **Start learning**: Begin with Week 1
-
-### Option 2: Sync from Local Repository
-```bash
-# 1. Clone repository
-git clone <repo-url> && cd databricks-infra
-
-# 2. Install Databricks CLI  
-curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
-databricks auth login
-
-# 3. Sync notebooks to workspace
-databricks workspace import-dir course/notebooks /Shared/course-notebooks --overwrite
-```
 
 ## 🗂️ Course Content Details
 
@@ -88,18 +82,67 @@ databricks workspace import-dir course/notebooks /Shared/course-notebooks --over
 - `14_create_job_with_wheel.py` - Python package deployment
 - `15_orchestrate_tasks_in_job.py` - Multi-task workflow orchestration
 
+## 📊 Working with Sample Data
+
+### Access Sample Datasets
+```bash
+# Datasets are available at:
+# /Shared/terraform-managed/course/datasets/
+# 
+# Include:
+# - customers.csv (sample customer data)
+# - transactions.json (sample transaction data)  
+# - products.parquet (sample product catalog)
+```
+
+### Create Your Own Catalogs
+```bash
+# When notebooks prompt for catalogs:
+# 1. Data → Create Catalog
+# 2. Name it: "my_learning_catalog"
+# 3. Use default settings
+# 4. Update notebook catalog references
+```
+
+## 🔄 Getting Updates
+
+### When New Content is Added
+```bash
+# New notebooks automatically appear in the shared folder
+# 1. Check: /Shared/terraform-managed/course/notebooks/
+# 2. Look for new week folders or updated notebooks
+# 3. Clone new content to your personal space
+# 4. Continue learning!
+```
+
 ## 💡 Tips for Success
 
 - **Start with Week 1** even if you know Spark - Databricks has unique features
-- **Run every code cell** - hands-on practice is key
-- **Modify the code** - experiment with different parameters
-- **Use sample datasets** provided in `course/datasets/`
+- **Clone before editing** - copy notebooks to your personal folder
+- **Experiment freely** - modify code, try different parameters
 - **Create your own data** to test different scenarios
+- **Use cluster recommendations** in notebooks for optimal performance
 
 ## ❓ Need Help?
 
 - **Notebook issues**: Check troubleshooting sections within each notebook
 - **Databricks questions**: Refer to [Databricks documentation](https://docs.databricks.com/)
-- **Course issues**: Use GitHub Issues in this repository
+- **Course issues**: Contact your instructor or use course discussion forum
 
-**Ready to start your Databricks journey? Begin with Week 1!** 🚀
+## 🚀 Advanced: Optional Local Development
+
+*Only if you want to work with git and sync notebooks locally*
+
+```bash
+# 1. Clone repository
+git clone <repo-url> && cd databricks-infra
+
+# 2. Install Databricks CLI  
+curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+databricks auth login
+
+# 3. Sync notebooks to your personal workspace
+databricks workspace import-dir course/notebooks /Users/{your-email}/local-course --overwrite
+```
+
+**Ready to start your Databricks journey? Head to the shared workspace and begin with Week 1!** 🚀
