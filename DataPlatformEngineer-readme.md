@@ -1,136 +1,253 @@
-# Data Platform Engineer Guide - Infrastructure Management
+# Data Platform Engineer Guide - Complete Infrastructure Setup
 
-*"I want to manage Databricks infrastructure with Terraform and control the full stack"*
+*"I want to deploy and manage Databricks infrastructure for my team of Data Engineers"*
 
-## 🚀 Quick Setup
+## 🎯 What You'll Accomplish
 
-### Prerequisites
-1. **Sign up for Databricks Free Trial**: [databricks.com/try-databricks](https://databricks.com/try-databricks)
-2. **Get workspace URL** and **create Personal Access Token**:
-   - User Settings → Developer → Access Tokens → Generate New Token
+By following this guide, you'll set up a complete Databricks learning environment where:
+- **Students get instant access** to course content via shared workspace
+- **New content automatically deploys** when the course is updated
+- **User management is centralized** through Infrastructure as Code
+- **Everything is reproducible** across different environments
 
-### Full Stack Setup
+## 📋 Prerequisites (Day 0)
+
+### Required Access & Tools
+- **Databricks workspace** with admin access (Free tier) and you get it when you sign up at [databricks.com/try-databricks](https://databricks.com/try-databricks)
+- **GitHub account** for repository access
+- **Basic Terraform knowledge** (resources, variables, state management)
+
+### Install Required Tools
 ```bash
-# 1. Clone and setup environment
-git clone <repo-url> && cd databricks-infra
-
-# 2. Install Poetry and dependencies
+# Poetry (Python dependency management)
 curl -sSL https://install.python-poetry.org | python3 -
-poetry install
 
-# 3. Setup development tools
-poetry shell
-pre-commit install
-
-# 4. Configure Databricks CLI
+# Databricks CLI
 brew tap databricks/tap && brew install databricks  # macOS
-databricks auth login  # Use your workspace URL and token
+# OR: curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
 
-# 5. Initialize Terraform
-cd terraform && terraform init
+# Terraform
+brew tap hashicorp/tap && brew install terraform  # macOS
+# OR: Download from https://terraform.io/downloads
 ```
 
-## 🏗️ Infrastructure Architecture
+## 🚀 Day 1: Initial Setup
 
-```
-databricks-infra/
-├── 📁 terraform/           # Infrastructure as Code
-│   ├── main.tf            # Users, notebooks, directories
-│   ├── catalogs.tf        # Unity Catalog management
-│   ├── groups.tf          # User groups and permissions
-│   ├── variables.tf       # Configuration options
-│   └── users.json         # User definitions and group assignments
-├── 📁 course/             # Learning materials (managed by Terraform)
-└── 📁 src/                # Python CLI tools
-```
-
-## ⚡ Deployment Modes
-
-### Local Development (Full Control)
+### Step 1: Get the Infrastructure Code
 ```bash
-# Creates all resources including catalogs and groups
-terraform plan
-terraform apply
+# Clone the repository
+git clone https://github.com/chanukyapekala/databricks-infra
+cd databricks-infra
+
+# Install Python dependencies
+poetry install
 ```
 
-### CI/CD Mode (Existing Infrastructure)
+### Step 2: Configure Authentication
 ```bash
-# Uses existing catalogs/groups, only manages notebooks and permissions
-terraform plan -var="create_catalogs=false" -var="create_groups=false"
-terraform apply -var="create_catalogs=false" -var="create_groups=false"
+# Authenticate with your Databricks workspace
+databricks auth login
+# Enter your workspace URL: https://your-workspace.cloud.databricks.com
+# Create and enter your personal access token
+
+# Verify connection
+databricks workspace list /
 ```
 
-## 🔧 Managing Infrastructure
+### Step 3: Customize for Your Organization
 
-### Catalogs (Databricks Free Edition Workflow)
-Due to Free Edition limitations, catalogs must be created manually first:
-
-1. **Create catalog in UI**: Databricks workspace → Data → Create Catalog
-2. **Import to Terraform**:
-   ```bash
-   terraform import 'databricks_catalog.custom_catalogs["my_catalog"]' my_catalog
-   ```
-3. **Terraform manages schemas and permissions automatically**
-
-### Users and Groups
-Edit `terraform/users.json`:
+#### Configure Students
+Edit `terraform/users.json` with your team:
 ```json
 {
   "users": [
     {
-      "email": "user@company.com",
-      "groups": ["platform_users"],
-      "permissions": {
-        "catalogs": ["analytics_catalog", "ml_catalog"]
-      }
+      "user_name": "alice@yourcompany.com",
+      "display_name": "Alice Johnson",
+      "groups": ["data_engineers"]
+    },
+    {
+      "user_name": "bob@yourcompany.com", 
+      "display_name": "Bob Smith",
+      "groups": ["data_engineers"]
+    },
+    {
+      "user_name": "charlie@yourcompany.com",
+      "display_name": "Charlie Davis", 
+      "groups": ["data_engineers", "advanced_users"]
     }
   ]
 }
 ```
 
-Then apply:
-```bash
-terraform apply
-```
-
-### Custom Schema Management
-Edit `terraform/locals.tf` to customize schema patterns:
+#### Customize Catalogs (Optional)
+Edit `terraform/locals.tf` to match your naming conventions:
 ```hcl
-custom_schemas = {
-  "analytics_catalog" = ["staging", "marts", "metrics"]
-  "ml_catalog" = ["features", "models", "experiments"]
+catalog_config = [
+  "training_dev",        # Replace sales_dev
+  "training_prod",       # Replace sales_prod
+  "analytics_sandbox",   # Replace marketing_dev
+  "team_experiments"     # Replace marketing_prod
+]
+```
+
+### Step 4: Deploy Infrastructure (10 minutes)
+```bash
+cd terraform
+
+# Initialize Terraform
+terraform init
+
+# Review what will be created
+terraform plan
+
+# Deploy everything
+terraform apply
+# Type 'yes' when prompted
+```
+
+**What Gets Created:**
+- ✅ User accounts for all students
+- ✅ Groups with appropriate permissions
+- ✅ Catalogs and schemas (bronze, silver, gold layers)
+- ✅ Course notebooks deployed to `/Shared/terraform-managed/course/notebooks/`
+- ✅ Sample datasets in shared location
+- ✅ Permission grants for students to access content
+
+## 👥 Day 2: Student Onboarding (10 minutes per student)
+
+### Onboard Your Students
+Send each student:
+
+1. **Workspace Access**:
+   - Workspace URL: `https://your-workspace.cloud.databricks.com`
+   - Login instructions (SSO via e-mail account)
+
+2. **Getting Started Guide**:
+   - Link to: `DataEngineer-readme.md` in this repository
+   - Starting point: `/Shared/terraform-managed/course/notebooks/01_week/`
+
+3. **First Steps**:
+   ```bash
+   # Students navigate to:
+   # Workspace → Shared → terraform-managed → course → notebooks
+   # Start with: 01_week/00_databricks_fundamentals.py
+   # Clone notebooks to personal folder for editing
+   ```
+
+### Verify Student Access
+```bash
+# Check deployed notebooks
+databricks workspace list /Shared/terraform-managed/course/notebooks
+
+# Verify student can access workspace
+# (Have student test login and access to shared content)
+```
+
+## 🔄 Ongoing Management
+
+### Adding New Users (optional)
+```bash
+# 1. Edit terraform/users.json - add new user
+{
+  "user_name": "newstudent@yourcompany.com",
+  "display_name": "New Student",
+  "groups": ["data_engineers"]
 }
-```
 
-## 🛠️ CLI Commands
-
-### Project Management
-```bash
-poetry run python -m src.cli status        # Project health check
-poetry run generate-datasets               # Create sample data
-poetry run validate-notebooks              # Validate all notebooks
-```
-
-### Development Workflow
-```bash
-poetry run pytest                          # Run test suite
-poetry run pre-commit run --all-files     # Quality checks
-```
-
-## 🌍 Environment Configuration
-
-### Development Environment
-```bash
-export TF_VAR_create_catalogs=true
-export TF_VAR_create_groups=true
+# 2. Deploy changes
+cd terraform
+terraform plan
 terraform apply
+
+# 3. New user gets automatic access to all course content
 ```
 
-### Production/CI Environment
+### Getting Course Updates
 ```bash
-export TF_VAR_create_catalogs=false  
-export TF_VAR_create_groups=false
-terraform apply
+# When new course content is released:
+# 1. Pull latest changes
+git pull origin main
+
+# 2. Review what's new (optional
+git log --oneline --since="1 week ago" course/notebooks/
+
+# 3. Deploy updates to student workspace
+cd terraform
+terraform plan    # Review new content
+terraform apply   # Deploy to students
+
+# Users automatically see new notebooks in shared workspace!
+```
+
+### Managing Different User Groups
+```bash
+# Create advanced group in terraform/users.json:
+{
+  "user_name": "senior@yourcompany.com",
+  "groups": ["data_engineers", "advanced_users"]
+}
+
+# Advanced users can get additional permissions or catalogs
+# Modify terraform/groups.tf and terraform/catalogs.tf as needed
+```
+
+## 🏗️ Infrastructure Architecture
+
+### Directory Structure
+```
+/Shared/terraform-managed/
+├── course/
+│   ├── notebooks/          # All course content (auto-deployed)
+│   │   ├── 01_week/        # Week 1 fundamentals
+│   │   ├── 02_week/        # Week 2 data ingestion
+│   │   └── ...
+│   └── datasets/           # Sample data files
+├── users/                  # Student personal folders (auto-created)
+└── shared-resources/       # Team shared resources
+```
+
+### Catalog Structure
+```
+training_dev                # Development environment
+├── bronze/                 # Raw data layer
+├── silver/                # Cleaned data layer
+└── gold/                  # Aggregated data layer
+
+training_prod              # Production environment  
+├── bronze/
+├── silver/
+└── gold/
+```
+
+## 🔧 Advanced Configuration
+
+### Multi-Environment Setup (Optional)
+#### Not recommended for first-time users
+```bash
+# For separate dev/staging/prod:
+# 1. Create separate terraform workspaces
+terraform workspace new dev
+terraform workspace new staging  
+terraform workspace new prod
+
+# 2. Use environment-specific variables
+terraform apply -var="environment=dev"
+terraform apply -var="environment=prod"
+```
+
+### CI/CD Integration
+Your repository includes GitHub Actions that:
+- **Automatically deploy** when you push changes
+- **Use conditional deployment** for different environments
+- **Require secrets**: `DATABRICKS_HOST` and `DATABRICKS_TOKEN`
+
+To enable:
+```bash
+# Add secrets to your GitHub repository:
+# Settings → Secrets → Actions
+DATABRICKS_HOST=https://your-workspace.cloud.databricks.com
+DATABRICKS_TOKEN=your-personal-access-token
 ```
 
 ## 🚨 Troubleshooting
@@ -138,64 +255,72 @@ terraform apply
 ### Common Issues
 
 **"Cannot create catalog" Error**
-- **Solution**: Use Free Edition manual creation + import pattern
-- Databricks Free Edition requires UI-based catalog creation
-
-**"Group already exists" Error**
-- **Solution**: Set `create_groups=false` and use data sources
-- Groups may have been created in previous runs
-
-**"Permission denied" Error**
-- **Solution**: Ensure your token has admin privileges
-- Check token scopes include workspace access
-
-**Terraform State Issues**
 ```bash
-# Reset specific resource
-terraform state rm 'databricks_catalog.custom_catalogs["problematic_catalog"]'
-
-# Reimport resource
+# Solution: Create catalogs manually first (Free Edition limitation)
+# 1. In Databricks UI: Data → Create Catalog
+# 2. Import to Terraform:
 terraform import 'databricks_catalog.custom_catalogs["catalog_name"]' catalog_name
 ```
 
-## 🔄 CI/CD Integration
+**"Group already exists" Error** 
+```bash
+# Solution: Use existing groups
+terraform apply -var="create_groups=false"
+```
 
-### GitHub Actions
-The repository includes automated deployment via `.github/workflows/deploy.yml`:
-- **Triggers**: Push to `main` or `bugfix/*` branches
-- **Mode**: Uses existing catalogs/groups (`create_catalogs=false`)
-- **Secrets**: Requires `DATABRICKS_HOST` and `DATABRICKS_TOKEN`
+**Users can't access notebooks**
+```bash
+# Check permissions:
+databricks workspace get-status /Shared/terraform-managed/course/notebooks
+# Verify user exists:
+databricks users list | grep student@company.com
+```
 
-### Local vs CI Differences
-| Aspect | Local Development | CI/CD |
-|--------|------------------|-------|
-| Catalog Creation | ✅ Can create | ❌ Uses existing |
-| Group Creation | ✅ Can create | ❌ Uses existing |
-| User Management | ✅ Full control | ✅ Full control |
-| Notebook Deployment | ✅ Full control | ✅ Full control |
+**Notebooks not updating**
+```bash
+# Force refresh:
+terraform taint 'databricks_notebook.course_notebooks["notebook_name"]'
+terraform apply
+```
 
-## 📋 Best Practices
+### Terraform State Management
+```bash
+# View current state
+terraform state list
 
-1. **Always run `terraform plan` first** to review changes
-2. **Use separate environments** for development and production
-3. **Version control your `users.json`** changes
-4. **Test locally before CI/CD deployment**
-5. **Monitor Terraform state** for drift detection
-6. **Keep tokens secure** - never commit to Git
+# Remove problematic resource
+terraform state rm 'databricks_user.users["problematic@email.com"]'
 
-## 🤝 Contributing
+# Reimport user
+terraform import 'databricks_user.users["user@email.com"]' user@email.com
+```
 
-1. **Setup development environment**:
-   ```bash
-   poetry install --with dev,terraform,notebooks
-   pre-commit install
-   ```
+## 📊 Monitoring & Maintenance
 
-2. **Quality checks before commit**:
-   ```bash
-   poetry run pre-commit run --all-files
-   poetry run pytest
-   poetry run validate-notebooks
-   ```
+### Regular Tasks
+- **Weekly**: Check for course updates (`git pull origin main`)
+- **Monthly**: Review student access and clean up unused accounts
+- **Quarterly**: Update Terraform and provider versions
 
-**Ready to manage Databricks infrastructure? Start with the setup above!** 🔧
+### Health Checks
+```bash
+# Verify infrastructure health
+poetry run python -m src.cli status
+
+# Validate all notebooks
+poetry run validate-notebooks
+
+# Check Terraform state
+terraform plan  # Should show "No changes"
+```
+
+## 🎓 Success Metrics
+
+Your deployment is successful when:
+- ✅ Students can access workspace immediately after onboarding
+- ✅ Course content appears automatically in shared workspace
+- ✅ New students can be added with a single `terraform apply`
+- ✅ Course updates deploy seamlessly to student environment
+- ✅ Students can focus on learning instead of infrastructure setup
+
+**Ready to deploy infrastructure for your Data Engineering team? Start with Day 1 setup above!** 🚀
