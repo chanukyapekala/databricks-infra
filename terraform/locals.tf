@@ -28,8 +28,8 @@ locals {
   ])
 
   # Files configuration
-  notebook_files = fileexists("${path.module}/course/notebooks") ? fileset("${path.module}/course/notebooks", "**/*.py") : []
-  dataset_files  = fileexists("${path.module}/course/datasets") ? fileset("${path.module}/course/datasets", "**/*.*") : []
+  notebook_files = fileset("${path.module}/../course/notebooks", "**/*.py")
+  dataset_files  = fileset("${path.module}/../course/datasets", "**/*.*")
 
   notebooks = {
     for file in local.notebook_files :
