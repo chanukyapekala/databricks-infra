@@ -33,9 +33,7 @@ databricks-infra/
 │   └── users.json               # User definitions and group assignments
 ├── src/                         # Python package
 │   ├── __init__.py              # Package initialization
-│   ├── cli.py                   # Rich CLI with project management
 │   ├── utils.py                 # Data generation and utilities
-│   └── validation.py            # Notebook and project validation
 ├── course/                      # Learning materials
 │   ├── notebooks/               # 16 Databricks notebooks (5 weeks)
 │   └── datasets/                # Sample data (CSV, JSON, Parquet)
